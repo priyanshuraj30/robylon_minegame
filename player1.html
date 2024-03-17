@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines Game</title>
+</head>
+<body>
+    <h1>Mines Game Player 1</h1>
+    <form id="moveForm">
+        <label for="rowInput">Row:</label>
+        <input type="text" id="rowInput" name="rowInput">
+        <label for="colInput">Column:</label>
+        <input type="text" id="colInput" name="colInput">
+        <button type="submit">Submit Move</button>
+    </form>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8080");
+
+        // Function to send move to the server
+        function sendMove(event) {
+            event.preventDefault(); // Prevent form submission
+            const row = document.getElementById("rowInput").value;
+            const col = document.getElementById("colInput").value;
+            const move = { row: row, col: col };
+            socket.send(JSON.stringify(move));
+            // Optionally, clear input fields after sending the move
+            document.getElementById("rowInput").value = "";
+            document.getElementById("colInput").value = "";
+        }
+
+        // Event listener for form submission
+        document.getElementById("moveForm").addEventListener("submit", sendMove);
+
+        // Event listener for incoming messages (game state updates)
+        socket.addEventListener('message', function (event) {
+            console.log('Message from server:', event.data);
+            // Update the game state display based on the received message
+            const gameState = JSON.parse(event.data);
+            displayGameState(gameState);
+        });
+
+        // Function to display the game state
+        function displayGameState(gameState) {
+            // Implement your logic to display the game state (grid) on the HTML page
+            console.log('Game State:', gameState);
+        }
+    </script>
+</body>
+</html>
