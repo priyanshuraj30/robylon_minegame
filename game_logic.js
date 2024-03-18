@@ -71,13 +71,18 @@ function playGame(players) {
     const gridSize = 5;
     const grid = createGrid(gridSize);
     placeMineAndGems(grid);
+    console.log(grid);
 
     // Broadcast initial grid to players
-    broadcastGameState(players, grid);
+    // broadcastGameState(players, grid);
 
     let currentPlayer = 1;
     let moves = 0;
     let gameOver = false;
+
+    for (const player of players) {
+        player.send(JSON.stringify('Player ' + currentPlayer + ' chance now!'));
+    }
 
     // Handle player moves
     for (const player of players) {
@@ -96,16 +101,25 @@ function playGame(players) {
                 return; // Don't increase moves counter for invalid input
             }
 
+            if (currentPlayer !== players.indexOf(player) + 1) {
+                player.send(JSON.stringify("It's not your turn!"));
+                return;
+            }
+
             if (revealTile(grid, row, col, currentPlayer)) {
                 const winner = currentPlayer === 1 ? 'Player 2' : 'Player 1';
                 const loser = currentPlayer === 1 ? 'Player 1' : 'Player 2';
                 db.insertMatchResult(moves, JSON.stringify(grid), loser === 'Draw' ? 'Draw' : winner);
                 broadcastGameOver(players, currentPlayer);
+                broadcastGameState(players, grid);
                 gameOver = true;
                 return;
             }
 
-            broadcastGameState(players, grid);
+            // broadcastGameState(players, grid);
+            for (const player of players) {
+                player.send(JSON.stringify('Player ' + currentPlayer + ' entered ' + row + ' ' + col));
+            }
             moves++;
             currentPlayer = currentPlayer === 1 ? 2 : 1;
 
@@ -114,6 +128,7 @@ function playGame(players) {
                     console.log(`It's a draw!`);
                     db.insertMatchResult(moves, JSON.stringify(grid), 'Draw');
                     broadcastGameOver(players);
+                    broadcastGameState(players, grid);
                 }
                 gameOver = true;
             }
@@ -129,19 +144,24 @@ function playGame(players) {
 
 // Function to broadcast game state to players
 function broadcastGameState(players, grid) {
-    const gameState = JSON.stringify(grid);
+    let gameState = "Game State:";
     for (const player of players) {
-        player.send(gameState);
+        player.send(JSON.stringify(gameState));
+    }
+    for (let row of grid) {
+        gameState = "";
+        gameState += row.join(' | ') + '\n';
+        for (const player of players) {
+            player.send(JSON.stringify(gameState));
+        }
     }
 }
 
 // Function to broadcast game over message to players
 function broadcastGameOver(players, winner = 0) {
     for (const player of players) {
-        player.send(JSON.stringify({ 
-            message: 'Game over!', 
-            winner: winner === 0 ? 'Draw' : 'Player ' + (3 - winner) 
-        }));
+        player.send(JSON.stringify('Game Over!'));
+        player.send(JSON.stringify(winner === 0 ? 'Draw' : 'Winner is Player ' + (3 - winner)));
     }
 }
 

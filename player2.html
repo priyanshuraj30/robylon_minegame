@@ -14,6 +14,7 @@
         <input type="text" id="colInput" name="colInput">
         <button type="submit">Submit Move</button>
     </form>
+    <div id="messageContainer"></div>
 
     <script>
         const socket = new WebSocket("ws://localhost:8080");
@@ -30,22 +31,22 @@
             document.getElementById("colInput").value = "";
         }
 
+        function displayMessage(message) {
+            const messageContainer = document.getElementById('messageContainer');
+            const p = document.createElement('p');
+            p.textContent = message;
+            messageContainer.appendChild(p);
+        }
+
         // Event listener for form submission
         document.getElementById("moveForm").addEventListener("submit", sendMove);
 
         // Event listener for incoming messages (game state updates)
         socket.addEventListener('message', function (event) {
-            console.log('Message from server:', event.data);
-            // Update the game state display based on the received message
-            const gameState = JSON.parse(event.data);
-            displayGameState(gameState);
+            // console.log('Message from server:', event.data);
+            const message = JSON.parse(event.data);
+            displayMessage(message);
         });
-
-        // Function to display the game state
-        function displayGameState(gameState) {
-            // Implement your logic to display the game state (grid) on the HTML page
-            console.log('Game State:', gameState);
-        }
     </script>
 </body>
 </html>
